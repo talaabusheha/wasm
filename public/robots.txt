@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wasminvites.com/sitemap.xml
+

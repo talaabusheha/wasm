@@ -1,0 +1,47 @@
+export interface Design {
+  id: string;
+  name: string;
+  tag: string;
+  url: string;
+  image: string;
+}
+
+export const designs: Design[] = [
+  {
+    id: 'royal',
+    name: 'ملكي 👑',
+    tag: 'فخم',
+    url: 'https://wasminvites.com/demo/royal',
+    image: '/designs/royal.webp',
+  },
+  {
+    id: 'olive',
+    name: 'زيتوني 🌿',
+    tag: 'هادئ',
+    url: 'https://wasminvites.com/demo/olive',
+    image: '/designs/olive.webp',
+  },
+  {
+    id: 'blush',
+    name: 'زهري راقي 🌸',
+    tag: 'ناعم',
+    url: 'https://wasminvites.com/demo/blush',
+    image: '/designs/blush.webp',
+  },
+  {
+    id: 'classic-gold',
+    name: 'كلاسيك ذهبي ✨',
+    tag: 'أنيق',
+    url: 'https://wasminvites.com/demo/classic-gold',
+    image: '/designs/classic-gold.webp',
+  },
+  // تصميم بـ url فارغ: يتم إخفاؤه تلقائياً حسب الشروط
+  {
+    id: 'pearl',
+    name: 'لؤلؤي 🪞',
+    tag: 'قريباً',
+    url: '',
+    image: '/designs/pearl.webp',
+  },
+];
+

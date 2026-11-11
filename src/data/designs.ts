@@ -8,6 +8,13 @@ export interface Design {
 
 export const designs: Design[] = [
   {
+    id: 'swan',
+    name: 'البجعة 🦢',
+    tag: 'رومانسي',
+    url: 'https://swan.wasminvites.com/',
+    image: '/designs/swan.webp',
+  },
+  {
     id: 'royal',
     name: 'ملكي 👑',
     tag: 'فخم',
@@ -44,4 +51,3 @@ export const designs: Design[] = [
     image: '/designs/pearl.webp',
   },
 ];
-

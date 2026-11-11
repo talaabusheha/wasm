@@ -47,10 +47,12 @@ export const DesignCard: React.FC<DesignCardProps> = ({ design }) => {
           />
         )}
 
-        {/* Style Tag badge */}
-        <span className="absolute top-2.5 right-2.5 bg-cream/95 backdrop-blur-sm text-brown text-[11px] font-arabic font-medium px-2 py-0.5 rounded-full border border-sand/70 shadow-xs">
-          {design.tag}
-        </span>
+        {/* Style Tag badge (Only shown if tag exists) */}
+        {design.tag && design.tag.trim().length > 0 && (
+          <span className="absolute top-2.5 right-2.5 bg-cream/95 backdrop-blur-sm text-brown text-[11px] font-arabic font-medium px-2 py-0.5 rounded-full border border-sand/70 shadow-xs">
+            {design.tag}
+          </span>
+        )}
       </div>
 
       {/* Card Info: Only visible when the image exists and is displayed */}

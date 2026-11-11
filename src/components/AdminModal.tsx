@@ -22,7 +22,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   // New design form state
   const [name, setName] = useState('');
-  const [tag, setTag] = useState('جديد');
+  const [tag, setTag] = useState('');
   const [url, setUrl] = useState('');
   const [imagePreview, setImagePreview] = useState<string>('');
   const [imageUrlInput, setImageUrlInput] = useState<string>('');
@@ -83,9 +83,18 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       return;
     }
 
-    // Default url if empty
-    const finalUrl = url.trim() || 'https://wasminvites.com/';
-    const finalTag = tag.trim() || 'فخم';
+    if (!url.trim()) {
+      setFormError('يرجى إدخال رابط الدعوة (إجباري)');
+      return;
+    }
+
+    let finalUrl = url.trim();
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = `https://${finalUrl}`;
+    }
+
+    // Optional tag (can be empty)
+    const finalTag = tag.trim();
 
     const newDesign: Design = {
       id: `custom-${Date.now()}`,
@@ -104,7 +113,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setImagePreview('');
     setImageUrlInput('');
     setUrl('');
-    setTag('جديد');
+    setTag('');
     setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع! ✨');
 
     setTimeout(() => {
@@ -302,10 +311,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     )}
                   </div>
 
-                  {/* Demo URL */}
+                  {/* Demo URL (Required) */}
                   <div>
                     <label className="block text-xs font-arabic font-medium text-brown mb-1">
-                      رابط الدعوة (اختياري)
+                      رابط الدعوة * (إجباري)
                     </label>
                     <input
                       type="url"
@@ -314,23 +323,35 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       placeholder="https://swan.wasminvites.com/"
                       dir="ltr"
                       className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
+                      required
                     />
                   </div>
 
-                  {/* Tag */}
+                  {/* Tag / Type (Optional) */}
                   <div>
-                    <label className="block text-xs font-arabic font-medium text-brown mb-1">
-                      التاج / التصنيف
-                    </label>
-                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-arabic font-medium text-brown">
+                        نوع الكرت / التاج (اختياري)
+                      </label>
+                      {tag && (
+                        <button
+                          type="button"
+                          onClick={() => setTag('')}
+                          className="text-[10px] text-red-600 hover:underline font-arabic"
+                        >
+                          بدون نوع ✕
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
                       {['فخم', 'رومانسي', 'ناعم', 'ملكي', 'جديد'].map((preset) => (
                         <button
                           key={preset}
                           type="button"
-                          onClick={() => setTag(preset)}
-                          className={`text-[10px] font-arabic px-2.5 py-0.5 rounded-full border transition-colors ${
+                          onClick={() => setTag(tag === preset ? '' : preset)}
+                          className={`text-[10px] font-arabic px-2.5 py-1 rounded-full border transition-colors ${
                             tag === preset
-                              ? 'bg-gold-dark text-white border-gold-dark'
+                              ? 'bg-gold-dark text-white border-gold-dark shadow-xs'
                               : 'bg-cream text-brown-muted border-sand hover:border-gold'
                           }`}
                         >
@@ -338,6 +359,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </button>
                       ))}
                     </div>
+                    <input
+                      type="text"
+                      value={tag}
+                      onChange={(e) => setTag(e.target.value)}
+                      placeholder="أو اكتبي نوعاً مخصصاً (اختياري)"
+                      className="w-full px-3 py-1.5 rounded-lg bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
+                    />
                   </div>
 
                   <button

@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Design } from '../data/designs';
-import { checkAuth, setAuth, compressImage, resetStoredDesigns } from '../utils/designsStorage';
+import { compressImage, resetStoredDesigns } from '../utils/designsStorage';
+import {
+  addDesignToService,
+  updateDesignInService,
+  deleteDesignFromService,
+  fetchDesigns,
+} from '../utils/designsService';
+import {
+  getSupabaseConfig,
+  saveSupabaseConfig,
+  isSupabaseConfigured,
+} from '../utils/supabaseClient';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -15,10 +26,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   designs,
   onUpdateDesigns,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => checkAuth());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('wasm_auth_session') === 'true';
+  });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // Tab: 'cards' or 'supabase'
+  const [activeTab, setActiveTab] = useState<'cards' | 'supabase'>('cards');
 
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,20 +50,25 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [successMessage, setSuccessMessage] = useState('');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
 
-  const handleCopyDesigns = () => {
-    if (designs.length === 0) return;
-    const jsonStr = JSON.stringify(designs, null, 2);
-    navigator.clipboard.writeText(jsonStr);
-    setCopiedSuccess(true);
-    setTimeout(() => setCopiedSuccess(false), 3000);
-  };
+  // Supabase Config State
+  const [sbUrl, setSbUrl] = useState('');
+  const [sbKey, setSbKey] = useState('');
+  const [sbStatus, setSbStatus] = useState<string>('');
+  const [showSqlGuide, setShowSqlGuide] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  useEffect(() => {
+    const cfg = getSupabaseConfig();
+    setSbUrl(cfg.url);
+    setSbKey(cfg.key);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim() === 'wasm' && password.trim() === '2005') {
-      setAuth(true);
+      sessionStorage.setItem('wasm_auth_session', 'true');
       setIsAuthenticated(true);
       setLoginError('');
       setUsername('');
@@ -58,7 +79,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleLogout = () => {
-    setAuth(false);
+    sessionStorage.removeItem('wasm_auth_session');
     setIsAuthenticated(false);
     handleCancelEdit();
   };
@@ -104,7 +125,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   // Save (Create or Update)
-  const handleSaveDesign = (e: React.FormEvent) => {
+  const handleSaveDesign = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
     setSuccessMessage('');
@@ -134,17 +155,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     if (editingId) {
       // Update existing design
-      const updated = designs.map((d) =>
-        d.id === editingId
-          ? {
-              ...d,
-              name: name.trim(),
-              tag: finalTag,
-              url: finalUrl,
-              image: finalImage,
-            }
-          : d
-      );
+      const updatedDesign: Design = {
+        id: editingId,
+        name: name.trim(),
+        tag: finalTag,
+        url: finalUrl,
+        image: finalImage,
+      };
+
+      const updated = await updateDesignInService(updatedDesign, designs);
       onUpdateDesigns(updated);
       setSuccessMessage('تم تعديل وحفظ الكرت بنجاح! ✨');
       setEditingId(null);
@@ -157,9 +176,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         url: finalUrl,
         image: finalImage,
       };
-      const updated = [newDesign, ...designs];
+
+      const updated = await addDesignToService(newDesign, designs);
       onUpdateDesigns(updated);
-      setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع! ✨');
+      setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع والسحابة! ✨');
     }
 
     // Reset form
@@ -175,12 +195,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   // Delete a design
-  const handleDeleteDesign = (id: string) => {
+  const handleDeleteDesign = async (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الكرت؟')) {
       if (editingId === id) {
         handleCancelEdit();
       }
-      const updated = designs.filter((d) => d.id !== id);
+      const updated = await deleteDesignFromService(id, designs);
       onUpdateDesigns(updated);
     }
   };
@@ -193,6 +213,53 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       onUpdateDesigns(reset);
     }
   };
+
+  const handleCopyDesigns = () => {
+    if (designs.length === 0) return;
+    const jsonStr = JSON.stringify(designs, null, 2);
+    navigator.clipboard.writeText(jsonStr);
+    setCopiedSuccess(true);
+    setTimeout(() => setCopiedSuccess(false), 3000);
+  };
+
+  const handleSaveSupabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSupabaseConfig(sbUrl, sbKey);
+    setSbStatus('جارِ الاتصال ومزامنة الكروت...');
+
+    const fresh = await fetchDesigns();
+    onUpdateDesigns(fresh);
+    setSbStatus('تم الاتصال والمزامنة السحابية بنجاح! ✅ أي كرت تضيفينه الآن سيظهر في كل الأجهزة.');
+
+    setTimeout(() => {
+      setSbStatus('');
+    }, 5000);
+  };
+
+  const sqlCode = `-- أنشئي هذا الجدول في Supabase > SQL Editor:
+create table public.designs (
+  id text primary key,
+  name text not null,
+  tag text default '',
+  url text not null,
+  image text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- السماح بالقراءة والإضافة لجميع الأجهزة
+alter table public.designs enable row level security;
+create policy "Allow all read" on public.designs for select using (true);
+create policy "Allow all insert" on public.designs for insert with check (true);
+create policy "Allow all update" on public.designs for update using (true);
+create policy "Allow all delete" on public.designs for delete using (true);`;
+
+  const copySqlToClipboard = () => {
+    navigator.clipboard.writeText(sqlCode);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 3000);
+  };
+
+  const isConnected = isSupabaseConfigured();
 
   return (
     <div
@@ -276,301 +343,441 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </form>
           ) : (
             /* Management Dashboard */
-            <div className="space-y-5">
-              {/* Form Section (Add or Edit) */}
-              <div
-                className={`p-4 rounded-2xl border transition-all ${
-                  editingId
-                    ? 'bg-gold/10 border-gold shadow-sm'
-                    : 'bg-beige border border-sand'
-                } space-y-3`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-arabic font-bold text-sm text-brown flex items-center gap-1.5">
-                    <span>{editingId ? '✏️' : '✨'}</span>
-                    <span>{editingId ? 'تعديل بيانات الكرت' : 'إضافة كرت جديد'}</span>
-                  </h3>
-                  {editingId && (
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="text-[11px] font-arabic text-brown-muted hover:text-brown border border-sand px-2 py-0.5 rounded-lg bg-cream transition-colors"
+            <div className="space-y-4">
+              {/* Tabs: Cards or Supabase Sync */}
+              <div className="flex rounded-xl bg-beige p-1 border border-sand">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('cards')}
+                  className={`flex-1 py-1.5 text-xs font-arabic font-bold rounded-lg transition-colors ${
+                    activeTab === 'cards'
+                      ? 'bg-cream text-brown shadow-xs'
+                      : 'text-brown-muted hover:text-brown'
+                  }`}
+                >
+                  إدارة الكروت 🎴
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('supabase')}
+                  className={`flex-1 py-1.5 text-xs font-arabic font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+                    activeTab === 'supabase'
+                      ? 'bg-cream text-brown shadow-xs'
+                      : 'text-brown-muted hover:text-brown'
+                  }`}
+                >
+                  <span>مزامنة السحابة ⚡</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isConnected ? 'bg-green-500' : 'bg-sand'
+                    }`}
+                  ></span>
+                </button>
+              </div>
+
+              {activeTab === 'supabase' ? (
+                /* Supabase Settings Tab */
+                <div className="p-4 rounded-2xl bg-beige border border-sand space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-arabic font-bold text-sm text-brown flex items-center gap-1.5">
+                      <span>⚡</span>
+                      <span>ربط السحابة (Supabase)</span>
+                    </h3>
+                    <span
+                      className={`text-[10px] font-arabic px-2 py-0.5 rounded-full border ${
+                        isConnected
+                          ? 'bg-green-100 text-green-800 border-green-200'
+                          : 'bg-sand/40 text-brown-muted border-sand'
+                      }`}
                     >
-                      إلغاء التعديل ✕
-                    </button>
+                      {isConnected ? 'متصل بالسحابة ✓' : 'غير متصل بعد'}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-brown-muted font-arabic leading-relaxed">
+                    عند إدخال بيانات مشروعكِ في Supabase، ستتزامن الكروت تلقائياً وتظهر على الجوال واللابتوب وكل زوار الموقع في نفس الثانية!
+                  </p>
+
+                  {sbStatus && (
+                    <div className="p-2.5 rounded-xl bg-green-50 border border-green-200 text-green-800 text-xs font-arabic text-center">
+                      {sbStatus}
+                    </div>
                   )}
-                </div>
 
-                {successMessage && (
-                  <div className="p-2 rounded-xl bg-green-50 border border-green-200 text-green-800 text-xs font-arabic text-center animate-fade-in">
-                    {successMessage}
-                  </div>
-                )}
-
-                {formError && (
-                  <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-arabic text-center">
-                    {formError}
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveDesign} className="space-y-3">
-                  {/* Card Name */}
-                  <div>
-                    <label className="block text-xs font-arabic font-medium text-brown mb-1">
-                      اسم الكرت *
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="مثال: البجعة 🦢 أو الملكي 👑"
-                      className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gold"
-                      required
-                    />
-                  </div>
-
-                  {/* Card Image */}
-                  <div>
-                    <label className="block text-xs font-arabic font-medium text-brown mb-1">
-                      صورة الكرت *
-                    </label>
-
-                    {/* Image Upload Button */}
-                    <div className="flex flex-col gap-2">
-                      <label className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-sand bg-cream hover:bg-beige cursor-pointer transition-colors text-xs font-arabic text-brown-muted">
-                        <span>📷</span>
-                        <span>{isProcessingImage ? 'جارِ معالجة الصورة...' : 'اختاري صورة من جهازك / موبايلك'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          disabled={isProcessingImage}
-                        />
+                  <form onSubmit={handleSaveSupabase} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-arabic font-medium text-brown mb-1">
+                        Project URL (رابط المشروع)
                       </label>
-
-                      {/* Or image URL input */}
                       <input
-                        type="text"
-                        value={imageUrlInput}
-                        onChange={(e) => {
-                          setImageUrlInput(e.target.value);
-                          if (e.target.value) setImagePreview('');
-                        }}
-                        placeholder="أو اكتبي رابط الصورة: https://..."
+                        type="url"
+                        value={sbUrl}
+                        onChange={(e) => setSbUrl(e.target.value)}
+                        placeholder="https://xyzcompany.supabase.co"
                         dir="ltr"
-                        className="w-full px-3 py-1.5 rounded-lg bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
+                        className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs font-latin focus:outline-none focus:ring-1 focus:ring-gold"
+                        required
                       />
                     </div>
 
-                    {/* Image Preview */}
-                    {(imagePreview || imageUrlInput) && (
-                      <div className="mt-2 flex items-center gap-2 p-2 rounded-xl bg-cream border border-sand">
-                        <img
-                          src={imagePreview || imageUrlInput}
-                          alt="معاينة الصورة"
-                          className="w-12 h-16 object-cover rounded-lg border border-sand"
-                        />
-                        <div className="text-[11px] text-brown-muted font-arabic">
-                          <p className="font-medium text-brown">تم اختيار الصورة بنجاح</p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setImagePreview('');
-                              setImageUrlInput('');
-                            }}
-                            className="text-red-600 hover:underline text-[10px] mt-0.5"
-                          >
-                            تغيير الصورة ✕
-                          </button>
-                        </div>
+                    <div>
+                      <label className="block text-xs font-arabic font-medium text-brown mb-1">
+                        Anon / Public API Key (مفتاح الـ API)
+                      </label>
+                      <input
+                        type="text"
+                        value={sbKey}
+                        onChange={(e) => setSbKey(e.target.value)}
+                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                        dir="ltr"
+                        className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs font-latin focus:outline-none focus:ring-1 focus:ring-gold"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98]"
+                    >
+                      حفظ وتفعيل الاتصال السحابي ⚡
+                    </button>
+                  </form>
+
+                  {/* SQL Guide Toggle */}
+                  <div className="pt-2 border-t border-sand/70">
+                    <button
+                      type="button"
+                      onClick={() => setShowSqlGuide(!showSqlGuide)}
+                      className="text-[11px] font-arabic text-gold-dark hover:underline flex items-center justify-between w-full"
+                    >
+                      <span>🛠️ كود إنشاء جدول الكروت في Supabase (SQL Editor)</span>
+                      <span>{showSqlGuide ? '▲' : '▼'}</span>
+                    </button>
+
+                    {showSqlGuide && (
+                      <div className="mt-2 space-y-2">
+                        <pre
+                          dir="ltr"
+                          className="p-2.5 rounded-xl bg-brown text-cream text-[10px] font-mono overflow-x-auto max-h-36 no-scrollbar"
+                        >
+                          {sqlCode}
+                        </pre>
+                        <button
+                          type="button"
+                          onClick={copySqlToClipboard}
+                          className="w-full py-1.5 rounded-lg bg-cream border border-sand text-[11px] font-arabic text-brown hover:bg-sand/30 transition-colors"
+                        >
+                          {copiedSql ? 'تم نسخ الكود! ✓' : 'نسخ كود الـ SQL بالكامل 📋'}
+                        </button>
                       </div>
                     )}
                   </div>
-
-                  {/* Demo URL (Required) */}
-                  <div>
-                    <label className="block text-xs font-arabic font-medium text-brown mb-1">
-                      رابط الدعوة * (إجباري)
-                    </label>
-                    <input
-                      type="url"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      placeholder="https://swan.wasminvites.com/"
-                      dir="ltr"
-                      className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
-                      required
-                    />
-                  </div>
-
-                  {/* Tag / Type (Optional) */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-arabic font-medium text-brown">
-                        نوع الكرت / التاج (اختياري)
-                      </label>
-                      {tag && (
+                </div>
+              ) : (
+                /* Cards Management Tab */
+                <>
+                  {/* Form Section (Add or Edit) */}
+                  <div
+                    className={`p-4 rounded-2xl border transition-all ${
+                      editingId
+                        ? 'bg-gold/10 border-gold shadow-sm'
+                        : 'bg-beige border border-sand'
+                    } space-y-3`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-arabic font-bold text-sm text-brown flex items-center gap-1.5">
+                        <span>{editingId ? '✏️' : '✨'}</span>
+                        <span>{editingId ? 'تعديل بيانات الكرت' : 'إضافة كرت جديد'}</span>
+                      </h3>
+                      {editingId && (
                         <button
                           type="button"
-                          onClick={() => setTag('')}
-                          className="text-[10px] text-red-600 hover:underline font-arabic"
+                          onClick={handleCancelEdit}
+                          className="text-[11px] font-arabic text-brown-muted hover:text-brown border border-sand px-2 py-0.5 rounded-lg bg-cream transition-colors"
                         >
-                          بدون نوع ✕
+                          إلغاء التعديل ✕
                         </button>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {['فخم', 'رومانسي', 'ناعم', 'ملكي', 'جديد'].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setTag(tag === preset ? '' : preset)}
-                          className={`text-[10px] font-arabic px-2.5 py-1 rounded-full border transition-colors ${
-                            tag === preset
-                              ? 'bg-gold-dark text-white border-gold-dark shadow-xs'
-                              : 'bg-cream text-brown-muted border-sand hover:border-gold'
-                          }`}
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
-                    <input
-                      type="text"
-                      value={tag}
-                      onChange={(e) => setTag(e.target.value)}
-                      placeholder="أو اكتبي نوعاً مخصصاً (اختياري)"
-                      className="w-full px-3 py-1.5 rounded-lg bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
-                    />
-                  </div>
 
-                  {/* Submit & Cancel Buttons */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="submit"
-                      disabled={isProcessingImage}
-                      className="flex-1 py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {editingId ? 'حفظ التعديلات ✨' : 'حفظ وإضافة الكرت للموقع ✨'}
-                    </button>
-                    {editingId && (
-                      <button
-                        type="button"
-                        onClick={handleCancelEdit}
-                        className="py-2.5 px-3 rounded-xl bg-cream border border-sand text-brown font-arabic text-xs sm:text-sm hover:bg-sand/30 transition-colors"
-                      >
-                        إلغاء
-                      </button>
+                    {successMessage && (
+                      <div className="p-2 rounded-xl bg-green-50 border border-green-200 text-green-800 text-xs font-arabic text-center animate-fade-in">
+                        {successMessage}
+                      </div>
                     )}
-                  </div>
-                </form>
-              </div>
 
-              {/* Cards Management List (Edit & Delete side by side) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-arabic font-bold text-xs text-brown">
-                    الكروت المضافة حالياً ({designs.length})
-                  </h4>
-                  {designs.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleCopyDesigns}
-                        className="text-[10px] font-arabic text-gold-dark hover:underline flex items-center gap-1 border border-gold/40 px-2 py-0.5 rounded-md bg-gold/10"
-                        title="نسخ كود الكروت لنشرها على جميع الأجهزة"
-                      >
-                        <span>{copiedSuccess ? 'تم النسخ بنجاح! ✓' : 'نسخ الكروت لجميع الأجهزة 📋'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleResetToDefault}
-                        className="text-[10px] font-arabic text-brown-muted hover:text-red-700 underline"
-                      >
-                        مسح الكل
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    {formError && (
+                      <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-arabic text-center">
+                        {formError}
+                      </div>
+                    )}
 
-                {designs.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-cream border border-sand/60 text-center">
-                    <p className="text-xs font-arabic text-brown-muted leading-relaxed">
-                      لا توجد أي كروت مضافة حالياً. يمكنكِ إضافة كرتكِ الأول الآن من النموذج بالأعلى 👆✨
-                    </p>
-                  </div>
-                ) : (
-                  <div className="max-h-56 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                    {designs.map((design) => {
-                      const isCurrentEditing = editingId === design.id;
+                    <form onSubmit={handleSaveDesign} className="space-y-3">
+                      {/* Card Name */}
+                      <div>
+                        <label className="block text-xs font-arabic font-medium text-brown mb-1">
+                          اسم الكرت *
+                        </label>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="مثال: البجعة 🦢 أو الملكي 👑"
+                          className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gold"
+                          required
+                        />
+                      </div>
 
-                      return (
-                        <div
-                          key={design.id}
-                          className={`flex items-center justify-between p-2 rounded-xl border transition-all gap-2 ${
-                            isCurrentEditing
-                              ? 'bg-gold/15 border-gold shadow-xs'
-                              : 'bg-beige border-sand'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            {design.image ? (
-                              <img
-                                src={design.image}
-                                alt={design.name}
-                                className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
-                                💌
-                              </div>
-                            )}
-                            <div className="overflow-hidden">
-                              <p className="font-arabic font-bold text-xs text-brown truncate">
-                                {design.name}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-[10px] text-brown-muted font-arabic">
-                                {design.tag && (
-                                  <span className="text-gold-dark font-medium">{design.tag}</span>
-                                )}
-                                <span className="truncate max-w-[120px] font-latin opacity-70">
-                                  {design.url.replace(/^https?:\/\//, '')}
-                                </span>
-                              </div>
+                      {/* Card Image */}
+                      <div>
+                        <label className="block text-xs font-arabic font-medium text-brown mb-1">
+                          صورة الكرت *
+                        </label>
+
+                        {/* Image Upload Button */}
+                        <div className="flex flex-col gap-2">
+                          <label className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-sand bg-cream hover:bg-beige cursor-pointer transition-colors text-xs font-arabic text-brown-muted">
+                            <span>📷</span>
+                            <span>
+                              {isProcessingImage
+                                ? 'جارِ معالجة الصورة...'
+                                : 'اختاري صورة من جهازك / موبايلك'}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              disabled={isProcessingImage}
+                            />
+                          </label>
+
+                          {/* Or image URL input */}
+                          <input
+                            type="text"
+                            value={imageUrlInput}
+                            onChange={(e) => {
+                              setImageUrlInput(e.target.value);
+                              if (e.target.value) setImagePreview('');
+                            }}
+                            placeholder="أو اكتبي رابط الصورة: https://..."
+                            dir="ltr"
+                            className="w-full px-3 py-1.5 rounded-lg bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
+                          />
+                        </div>
+
+                        {/* Image Preview */}
+                        {(imagePreview || imageUrlInput) && (
+                          <div className="mt-2 flex items-center gap-2 p-2 rounded-xl bg-cream border border-sand">
+                            <img
+                              src={imagePreview || imageUrlInput}
+                              alt="معاينة الصورة"
+                              className="w-12 h-16 object-cover rounded-lg border border-sand"
+                            />
+                            <div className="text-[11px] text-brown-muted font-arabic">
+                              <p className="font-medium text-brown">تم اختيار الصورة بنجاح</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setImagePreview('');
+                                  setImageUrlInput('');
+                                }}
+                                className="text-red-600 hover:underline text-[10px] mt-0.5"
+                              >
+                                تغيير الصورة ✕
+                              </button>
                             </div>
                           </div>
+                        )}
+                      </div>
 
-                          {/* Action Buttons: Edit and Delete Side by Side */}
-                          <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Demo URL (Required) */}
+                      <div>
+                        <label className="block text-xs font-arabic font-medium text-brown mb-1">
+                          رابط الدعوة * (إجباري)
+                        </label>
+                        <input
+                          type="url"
+                          value={url}
+                          onChange={(e) => setUrl(e.target.value)}
+                          placeholder="https://swan.wasminvites.com/"
+                          dir="ltr"
+                          className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
+                          required
+                        />
+                      </div>
+
+                      {/* Tag / Type (Optional) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-arabic font-medium text-brown">
+                            نوع الكرت / التاج (اختياري)
+                          </label>
+                          {tag && (
                             <button
                               type="button"
-                              onClick={() => handleStartEdit(design)}
-                              className={`px-2.5 py-1 rounded-lg text-[11px] font-arabic font-medium transition-colors ${
-                                isCurrentEditing
-                                  ? 'bg-gold-dark text-white border border-gold-dark'
-                                  : 'bg-cream border border-sand text-brown hover:border-gold hover:text-gold-dark'
-                              }`}
-                              title="تعديل بيانات هذا الكرت"
+                              onClick={() => setTag('')}
+                              className="text-[10px] text-red-600 hover:underline font-arabic"
                             >
-                              تعديل ✏️
+                              بدون نوع ✕
                             </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDesign(design.id)}
-                              className="px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors text-[11px] font-arabic"
-                              title="حذف هذا الكرت"
-                            >
-                              حذف 🗑️
-                            </button>
-                          </div>
+                          )}
                         </div>
-                      );
-                    })}
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {['فخم', 'رومانسي', 'ناعم', 'ملكي', 'جديد'].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => setTag(tag === preset ? '' : preset)}
+                              className={`text-[10px] font-arabic px-2.5 py-1 rounded-full border transition-colors ${
+                                tag === preset
+                                  ? 'bg-gold-dark text-white border-gold-dark shadow-xs'
+                                  : 'bg-cream text-brown-muted border-sand hover:border-gold'
+                              }`}
+                            >
+                              {preset}
+                            </button>
+                          ))}
+                        </div>
+                        <input
+                          type="text"
+                          value={tag}
+                          onChange={(e) => setTag(e.target.value)}
+                          placeholder="أو اكتبي نوعاً مخصصاً (اختياري)"
+                          className="w-full px-3 py-1.5 rounded-lg bg-cream border border-sand text-brown text-xs placeholder-brown-muted/50 focus:outline-none focus:ring-1 focus:ring-gold"
+                        />
+                      </div>
+
+                      {/* Submit & Cancel Buttons */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="submit"
+                          disabled={isProcessingImage}
+                          className="flex-1 py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                          {editingId ? 'حفظ التعديلات ✨' : 'حفظ وإضافة الكرت للموقع ✨'}
+                        </button>
+                        {editingId && (
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            className="py-2.5 px-3 rounded-xl bg-cream border border-sand text-brown font-arabic text-xs sm:text-sm hover:bg-sand/30 transition-colors"
+                          >
+                            إلغاء
+                          </button>
+                        )}
+                      </div>
+                    </form>
                   </div>
-                )}
-              </div>
+
+                  {/* Cards Management List (Edit & Delete side by side) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-arabic font-bold text-xs text-brown">
+                        الكروت المضافة حالياً ({designs.length})
+                      </h4>
+                      {designs.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCopyDesigns}
+                            className="text-[10px] font-arabic text-gold-dark hover:underline flex items-center gap-1 border border-gold/40 px-2 py-0.5 rounded-md bg-gold/10"
+                            title="نسخ كود الكروت لنشرها على جميع الأجهزة"
+                          >
+                            <span>
+                              {copiedSuccess ? 'تم النسخ بنجاح! ✓' : 'نسخ الكروت 📋'}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleResetToDefault}
+                            className="text-[10px] font-arabic text-brown-muted hover:text-red-700 underline"
+                          >
+                            مسح الكل
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {designs.length === 0 ? (
+                      <div className="p-4 rounded-xl bg-cream border border-sand/60 text-center">
+                        <p className="text-xs font-arabic text-brown-muted leading-relaxed">
+                          لا توجد أي كروت مضافة حالياً. يمكنكِ إضافة كرتكِ الأول الآن من النموذج بالأعلى 👆✨
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-56 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
+                        {designs.map((design) => {
+                          const isCurrentEditing = editingId === design.id;
+
+                          return (
+                            <div
+                              key={design.id}
+                              className={`flex items-center justify-between p-2 rounded-xl border transition-all gap-2 ${
+                                isCurrentEditing
+                                  ? 'bg-gold/15 border-gold shadow-xs'
+                                  : 'bg-beige border-sand'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 overflow-hidden">
+                                {design.image ? (
+                                  <img
+                                    src={design.image}
+                                    alt={design.name}
+                                    className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
+                                    💌
+                                  </div>
+                                )}
+                                <div className="overflow-hidden">
+                                  <p className="font-arabic font-bold text-xs text-brown truncate">
+                                    {design.name}
+                                  </p>
+                                  <div className="flex items-center gap-1.5 text-[10px] text-brown-muted font-arabic">
+                                    {design.tag && (
+                                      <span className="text-gold-dark font-medium">{design.tag}</span>
+                                    )}
+                                    <span className="truncate max-w-[120px] font-latin opacity-70">
+                                      {design.url.replace(/^https?:\/\//, '')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons: Edit and Delete Side by Side */}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEdit(design)}
+                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-arabic font-medium transition-colors ${
+                                    isCurrentEditing
+                                      ? 'bg-gold-dark text-white border border-gold-dark'
+                                      : 'bg-cream border border-sand text-brown hover:border-gold hover:text-gold-dark'
+                                  }`}
+                                  title="تعديل بيانات هذا الكرت"
+                                >
+                                  تعديل ✏️
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteDesign(design.id)}
+                                  className="px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors text-[11px] font-arabic"
+                                  title="حذف هذا الكرت"
+                                >
+                                  حذف 🗑️
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Logout Button */}
               <div className="pt-2 border-t border-sand flex items-center justify-between">
@@ -581,7 +788,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 >
                   <span>تسجيل خروج</span>
                 </button>
-                <span className="text-[10px] text-brown-muted font-latin">v1.1 • WASM Admin</span>
+                <span className="text-[10px] text-brown-muted font-latin">v1.2 • WASM Cloud</span>
               </div>
             </div>
           )}

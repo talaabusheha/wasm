@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CtaButton } from './components/CtaButton';
 import { DesignsSection } from './components/DesignsSection';
@@ -8,15 +8,36 @@ import { StepsSection } from './components/StepsSection';
 import { Footer } from './components/Footer';
 import { AdminModal } from './components/AdminModal';
 import { Design } from './data/designs';
-import { getStoredDesigns, saveStoredDesigns } from './utils/designsStorage';
+import { getStoredDesigns } from './utils/designsStorage';
+import { fetchDesigns, subscribeToDesigns } from './utils/designsService';
 
 export const App: React.FC = () => {
   const [designsList, setDesignsList] = useState<Design[]>(() => getStoredDesigns());
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
+  // Sync with Supabase on mount and listen to real-time changes
+  useEffect(() => {
+    fetchDesigns().then((designs) => {
+      if (designs && Array.isArray(designs)) {
+        setDesignsList(designs);
+      }
+    });
+
+    const unsubscribe = subscribeToDesigns(() => {
+      fetchDesigns().then((designs) => {
+        if (designs && Array.isArray(designs)) {
+          setDesignsList(designs);
+        }
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const handleUpdateDesigns = (updatedDesigns: Design[]) => {
     setDesignsList(updatedDesigns);
-    saveStoredDesigns(updatedDesigns);
   };
 
   return (
@@ -52,7 +73,7 @@ export const App: React.FC = () => {
         <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
       </main>
 
-      {/* Admin Panel Modal for WASM Employee */}
+      {/* Admin Panel Modal for WASM Employee with Supabase Sync */}
       <AdminModal
         isOpen={isAdminOpen}
         onClose={() => setIsAdminOpen(false)}

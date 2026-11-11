@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Design } from '../data/designs';
-import { checkAuth, setAuth, compressImage, resetStoredDesigns } from '../utils/designsStorage';
+import { checkAuth, setAuth, compressImage, resetStoredDesigns, markDesignDeleted } from '../utils/designsStorage';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -114,6 +114,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleDeleteDesign = (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الكرت؟')) {
+      markDesignDeleted(id);
       const updated = designs.filter((d) => d.id !== id);
       onUpdateDesigns(updated);
     }

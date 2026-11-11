@@ -6,6 +6,7 @@ export interface Design {
   image: string;
 }
 
+// الكروت الحقيقية لـ وَسم فقط
 export const designs: Design[] = [
   {
     id: 'swan',
@@ -20,34 +21,5 @@ export const designs: Design[] = [
     tag: 'فخم',
     url: 'https://royal.wasminvites.com/',
     image: '/designs/royal.webp',
-  },
-  {
-    id: 'olive',
-    name: 'زيتوني 🌿',
-    tag: 'هادئ',
-    url: 'https://wasminvites.com/demo/olive',
-    image: '/designs/olive.webp',
-  },
-  {
-    id: 'blush',
-    name: 'زهري راقي 🌸',
-    tag: 'ناعم',
-    url: 'https://wasminvites.com/demo/blush',
-    image: '/designs/blush.webp',
-  },
-  {
-    id: 'classic-gold',
-    name: '  ',
-    tag: 'أنيق',
-    url: 'https://wasminvites.com/demo/classic-gold',
-    image: '/designs/royal-garden.webp',
-  },
-  // تصميم بـ url فارغ: يتم إخفاؤه تلقائياً حسب الشروط
-  {
-    id: 'pearl',
-    name: 'لؤلؤي 🪞',
-    tag: 'قريباً',
-    url: '',
-    image: '/designs/pearl.webp',
   },
 ];

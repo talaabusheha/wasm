@@ -1,21 +1,28 @@
 import { designs as initialDesigns, Design } from '../data/designs';
 
-const STORAGE_KEY = 'wasm_custom_designs_v1';
+const STORAGE_KEY = 'wasm_custom_designs_v2';
+const DELETED_KEY = 'wasm_deleted_card_ids_v2';
 const AUTH_KEY = 'wasm_auth_session';
 
 export function getStoredDesigns(): Design[] {
   try {
+    const deletedRaw = localStorage.getItem(DELETED_KEY);
+    const deletedIds: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((d) => d && d.id && !deletedIds.includes(d.id));
       }
     }
+
+    // Default to initial designs minus any deleted IDs
+    return initialDesigns.filter((d) => !deletedIds.includes(d.id));
   } catch (error) {
     console.error('Failed to read designs from localStorage:', error);
+    return initialDesigns;
   }
-  return initialDesigns;
 }
 
 export function saveStoredDesigns(designsList: Design[]): void {
@@ -26,9 +33,25 @@ export function saveStoredDesigns(designsList: Design[]): void {
   }
 }
 
+export function markDesignDeleted(id: string): void {
+  try {
+    const deletedRaw = localStorage.getItem(DELETED_KEY);
+    const deletedIds: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      localStorage.setItem(DELETED_KEY, JSON.stringify(deletedIds));
+    }
+  } catch (error) {
+    console.error('Failed to record deleted design ID:', error);
+  }
+}
+
 export function resetStoredDesigns(): Design[] {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(DELETED_KEY);
+    // Also clean up any legacy keys
+    localStorage.removeItem('wasm_custom_designs_v1');
   } catch (error) {
     console.error('Failed to reset designs in localStorage:', error);
   }
@@ -84,4 +107,3 @@ export async function compressImage(file: File, maxWidth = 500): Promise<string>
     reader.readAsDataURL(file);
   });
 }
-

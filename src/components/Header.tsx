@@ -20,7 +20,14 @@ export const Header: React.FC = () => {
               className={`w-full h-full object-cover rounded-full transition-opacity duration-300 ${
                 logoLoaded ? 'opacity-100' : 'opacity-0 absolute'
               }`}
-              onLoad={() => setLogoLoaded(true)}
+              onLoad={(e) => {
+                const target = e.currentTarget;
+                if (target.naturalWidth <= 1 && target.naturalHeight <= 1) {
+                  setLogoError(true);
+                } else {
+                  setLogoLoaded(true);
+                }
+              }}
               onError={() => setLogoError(true)}
             />
           )}

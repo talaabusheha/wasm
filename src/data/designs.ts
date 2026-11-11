@@ -37,10 +37,10 @@ export const designs: Design[] = [
   },
   {
     id: 'classic-gold',
-    name: 'كلاسيك ذهبي ✨',
+    name: '  ',
     tag: 'أنيق',
     url: 'https://wasminvites.com/demo/classic-gold',
-    image: '/designs/classic-gold.webp',
+    image: '/designs/royal-garden.webp',
   },
   // تصميم بـ url فارغ: يتم إخفاؤه تلقائياً حسب الشروط
   {

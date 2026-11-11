@@ -16,7 +16,7 @@ export function getStoredDesigns(): Design[] {
     if (saved !== null) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        return parsed;
+        return parsed.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
       }
     }
   } catch (error) {

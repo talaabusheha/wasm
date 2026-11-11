@@ -5,6 +5,7 @@ import {
   addDesignToService,
   updateDesignInService,
   deleteDesignFromService,
+  reorderDesignsInService,
   fetchDesigns,
 } from '../utils/designsService';
 import {
@@ -236,6 +237,40 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }, 5000);
   };
 
+  const [copiedSortSql, setCopiedSortSql] = useState(false);
+
+  const sortSqlCode = `alter table public.designs add column if not exists sort_order integer default 0;`;
+
+  const copySortSqlToClipboard = () => {
+    navigator.clipboard.writeText(sortSqlCode);
+    setCopiedSortSql(true);
+    setTimeout(() => setCopiedSortSql(false), 3000);
+  };
+
+  const handleMoveUp = async (index: number) => {
+    if (index <= 0) return;
+    const newList = [...designs];
+    const item = newList[index];
+    newList[index] = newList[index - 1];
+    newList[index - 1] = item;
+
+    onUpdateDesigns(newList);
+    const updated = await reorderDesignsInService(newList);
+    onUpdateDesigns(updated);
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (index >= designs.length - 1) return;
+    const newList = [...designs];
+    const item = newList[index];
+    newList[index] = newList[index + 1];
+    newList[index + 1] = item;
+
+    onUpdateDesigns(newList);
+    const updated = await reorderDesignsInService(newList);
+    onUpdateDesigns(updated);
+  };
+
   const sqlCode = `-- أنشئي هذا الجدول في Supabase > SQL Editor:
 create table public.designs (
   id text primary key,
@@ -243,8 +278,12 @@ create table public.designs (
   tag text default '',
   url text not null,
   image text not null,
+  sort_order integer default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- إذا كان الجدول منشأ لديك مسبقاً، نفذي هذا السطر لإضافة خاصية الترتيب:
+alter table public.designs add column if not exists sort_order integer default 0;
 
 -- السماح بالقراءة والإضافة لجميع الأجهزة
 alter table public.designs enable row level security;
@@ -443,6 +482,32 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                     </button>
                   </form>
 
+                  {/* Quick Migration for Sort Order */}
+                  <div className="pt-2 border-t border-sand/70">
+                    <div className="p-3 rounded-2xl bg-gold/10 border border-gold/30 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-arabic font-bold text-brown">
+                        <span>⚡</span>
+                        <span>تفعيل خاصية ترتيب الكروت في Supabase</span>
+                      </div>
+                      <p className="text-[11px] font-arabic text-brown-muted leading-relaxed">
+                        إذا كنتِ أنشأتِ الجدول سابقاً، انسخي هذا السطر ونفذيه في Supabase &gt; SQL Editor ليتم حفظ الترتيب تلقائياً في السحابة:
+                      </p>
+                      <code
+                        dir="ltr"
+                        className="block p-2 rounded-xl bg-brown text-cream text-[10px] font-mono select-all overflow-x-auto"
+                      >
+                        {sortSqlCode}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={copySortSqlToClipboard}
+                        className="w-full py-1.5 rounded-xl bg-cream border border-sand text-xs font-arabic text-brown hover:bg-sand/30 font-medium transition-colors"
+                      >
+                        {copiedSortSql ? 'تم نسخ سطر الترتيب بنجاح! ✓' : 'نسخ كود الترتيب (SQL) 📋'}
+                      </button>
+                    </div>
+                  </div>
+
                   {/* SQL Guide Toggle */}
                   <div className="pt-2 border-t border-sand/70">
                     <button
@@ -450,7 +515,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       onClick={() => setShowSqlGuide(!showSqlGuide)}
                       className="text-[11px] font-arabic text-gold-dark hover:underline flex items-center justify-between w-full"
                     >
-                      <span>🛠️ كود إنشاء جدول الكروت في Supabase (SQL Editor)</span>
+                      <span>🛠️ كود إنشاء جدول الكروت بالكامل من الصفر</span>
                       <span>{showSqlGuide ? '▲' : '▼'}</span>
                     </button>
 
@@ -699,6 +764,15 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       )}
                     </div>
 
+                    {designs.length > 1 && (
+                      <div className="p-2.5 rounded-xl bg-gold/10 border border-gold/30 flex items-center gap-2 text-[11px] font-arabic text-brown leading-relaxed">
+                        <span className="text-sm shrink-0">💡</span>
+                        <span>
+                          استخدمي أزرار <strong>(▲ / ▼)</strong> لتحديد ترتيب ظهور الكروت. الكرت رقم <strong>#1</strong> هو أول كرت سيظهر للزوار في واجهة الموقع!
+                        </span>
+                      </div>
+                    )}
+
                     {designs.length === 0 ? (
                       <div className="p-4 rounded-xl bg-cream border border-sand/60 text-center">
                         <p className="text-xs font-arabic text-brown-muted leading-relaxed">
@@ -706,32 +780,74 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                         </p>
                       </div>
                     ) : (
-                      <div className="max-h-56 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                        {designs.map((design) => {
+                      <div className="max-h-64 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
+                        {designs.map((design, index) => {
                           const isCurrentEditing = editingId === design.id;
+                          const isFirst = index === 0;
+                          const isLast = index === designs.length - 1;
 
                           return (
                             <div
                               key={design.id}
-                              className={`flex items-center justify-between p-2 rounded-xl border transition-all gap-2 ${
+                              className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all gap-2 ${
                                 isCurrentEditing
                                   ? 'bg-gold/15 border-gold shadow-xs'
                                   : 'bg-beige border-sand'
                               }`}
                             >
-                              <div className="flex items-center gap-2 overflow-hidden">
+                              <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden flex-1 min-w-0">
+                                {/* Order Rank Badge */}
+                                <div
+                                  className="w-6 h-6 rounded-lg bg-sand/80 border border-sand text-brown font-bold text-[10px] sm:text-xs flex items-center justify-center shrink-0 font-latin"
+                                  title={`ترتيب الظهور: رقم ${index + 1}`}
+                                >
+                                  #{index + 1}
+                                </div>
+
+                                {/* Up / Down Order Buttons */}
+                                <div className="flex flex-col gap-0.5 shrink-0">
+                                  <button
+                                    type="button"
+                                    disabled={isFirst}
+                                    onClick={() => handleMoveUp(index)}
+                                    className={`w-5 h-3.5 rounded flex items-center justify-center text-[9px] font-bold transition-all ${
+                                      isFirst
+                                        ? 'opacity-20 cursor-not-allowed bg-cream/40 text-brown-muted'
+                                        : 'bg-cream border border-sand text-brown hover:bg-gold-dark hover:text-white hover:border-gold-dark active:scale-95'
+                                    }`}
+                                    title="تقديم الكرت للأعلى (يظهر قبل)"
+                                    aria-label="تقديم للأعلى"
+                                  >
+                                    ▲
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isLast}
+                                    onClick={() => handleMoveDown(index)}
+                                    className={`w-5 h-3.5 rounded flex items-center justify-center text-[9px] font-bold transition-all ${
+                                      isLast
+                                        ? 'opacity-20 cursor-not-allowed bg-cream/40 text-brown-muted'
+                                        : 'bg-cream border border-sand text-brown hover:bg-gold-dark hover:text-white hover:border-gold-dark active:scale-95'
+                                    }`}
+                                    title="تأخير الكرت للأسفل (يظهر بعد)"
+                                    aria-label="تأخير للأسفل"
+                                  >
+                                    ▼
+                                  </button>
+                                </div>
+
                                 {design.image ? (
                                   <img
                                     src={design.image}
                                     alt={design.name}
-                                    className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
+                                    className="w-8 h-11 object-cover rounded-md border border-sand/60 shrink-0"
                                   />
                                 ) : (
-                                  <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
+                                  <div className="w-8 h-11 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
                                     💌
                                   </div>
                                 )}
-                                <div className="overflow-hidden">
+                                <div className="overflow-hidden min-w-0">
                                   <p className="font-arabic font-bold text-xs text-brown truncate">
                                     {design.name}
                                   </p>
@@ -739,7 +855,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                     {design.tag && (
                                       <span className="text-gold-dark font-medium">{design.tag}</span>
                                     )}
-                                    <span className="truncate max-w-[120px] font-latin opacity-70">
+                                    <span className="truncate max-w-[85px] sm:max-w-[120px] font-latin opacity-70">
                                       {design.url.replace(/^https?:\/\//, '')}
                                     </span>
                                   </div>
@@ -747,11 +863,11 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                               </div>
 
                               {/* Action Buttons: Edit and Delete Side by Side */}
-                              <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="flex items-center gap-1 shrink-0">
                                 <button
                                   type="button"
                                   onClick={() => handleStartEdit(design)}
-                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-arabic font-medium transition-colors ${
+                                  className={`px-2 py-1 rounded-lg text-[11px] font-arabic font-medium transition-colors ${
                                     isCurrentEditing
                                       ? 'bg-gold-dark text-white border border-gold-dark'
                                       : 'bg-cream border border-sand text-brown hover:border-gold hover:text-gold-dark'
@@ -764,7 +880,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteDesign(design.id)}
-                                  className="px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors text-[11px] font-arabic"
+                                  className="px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors text-[11px] font-arabic"
                                   title="حذف هذا الكرت"
                                 >
                                   حذف 🗑️

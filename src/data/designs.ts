@@ -4,6 +4,7 @@ export interface Design {
   tag: string;
   url: string;
   image: string;
+  sort_order?: number;
 }
 
 // القائمة فارغة تماماً بحيث تضيفين الكروت بنفسك يدوياً عبر لوحة "موظف وسم"

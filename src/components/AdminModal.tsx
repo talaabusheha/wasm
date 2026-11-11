@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Design } from '../data/designs';
-import { checkAuth, setAuth, compressImage, resetStoredDesigns, markDesignDeleted } from '../utils/designsStorage';
+import { checkAuth, setAuth, compressImage, resetStoredDesigns } from '../utils/designsStorage';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -114,14 +114,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleDeleteDesign = (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الكرت؟')) {
-      markDesignDeleted(id);
       const updated = designs.filter((d) => d.id !== id);
       onUpdateDesigns(updated);
     }
   };
 
   const handleResetToDefault = () => {
-    if (window.confirm('هل تريد استعادة قائمة الكروت الافتراضية؟')) {
+    if (window.confirm('هل أنت متأكد من مسح جميع الكروت؟')) {
       const reset = resetStoredDesigns();
       onUpdateDesigns(reset);
     }
@@ -355,56 +354,66 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="font-arabic font-bold text-xs text-brown">
-                    الكروت المعروضة حالياً ({designs.length})
+                    الكروت المضافة حالياً ({designs.length})
                   </h4>
-                  <button
-                    type="button"
-                    onClick={handleResetToDefault}
-                    className="text-[10px] font-arabic text-brown-muted hover:text-red-700 underline"
-                  >
-                    استعادة الأصل
-                  </button>
-                </div>
-
-                <div className="max-h-56 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                  {designs.map((design) => (
-                    <div
-                      key={design.id}
-                      className="flex items-center justify-between p-2 rounded-xl bg-beige border border-sand gap-2"
+                  {designs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleResetToDefault}
+                      className="text-[10px] font-arabic text-brown-muted hover:text-red-700 underline"
                     >
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        {design.image ? (
-                          <img
-                            src={design.image}
-                            alt={design.name}
-                            className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
-                          />
-                        ) : (
-                          <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
-                            💌
-                          </div>
-                        )}
-                        <div className="overflow-hidden">
-                          <p className="font-arabic font-bold text-xs text-brown truncate">
-                            {design.name}
-                          </p>
-                          <span className="text-[10px] text-brown-muted font-arabic">
-                            {design.tag}
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDesign(design.id)}
-                        className="px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-[10px] font-arabic shrink-0"
-                        title="حذف هذا الكرت"
-                      >
-                        حذف 🗑️
-                      </button>
-                    </div>
-                  ))}
+                      مسح جميع الكروت
+                    </button>
+                  )}
                 </div>
+
+                {designs.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-cream border border-sand/60 text-center">
+                    <p className="text-xs font-arabic text-brown-muted leading-relaxed">
+                      لا توجد أي كروت مضافة حالياً. يمكنكِ إضافة كرتكِ الأول الآن من النموذج بالأعلى 👆✨
+                    </p>
+                  </div>
+                ) : (
+                  <div className="max-h-56 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
+                    {designs.map((design) => (
+                      <div
+                        key={design.id}
+                        className="flex items-center justify-between p-2 rounded-xl bg-beige border border-sand gap-2"
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          {design.image ? (
+                            <img
+                              src={design.image}
+                              alt={design.name}
+                              className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
+                              💌
+                            </div>
+                          )}
+                          <div className="overflow-hidden">
+                            <p className="font-arabic font-bold text-xs text-brown truncate">
+                              {design.name}
+                            </p>
+                            <span className="text-[10px] text-brown-muted font-arabic">
+                              {design.tag}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDesign(design.id)}
+                          className="px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-[10px] font-arabic shrink-0"
+                          title="حذف هذا الكرت"
+                        >
+                          حذف 🗑️
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Logout Button */}

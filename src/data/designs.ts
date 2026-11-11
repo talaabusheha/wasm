@@ -6,20 +6,5 @@ export interface Design {
   image: string;
 }
 
-// الكروت الحقيقية لـ وَسم فقط
-export const designs: Design[] = [
-  {
-    id: 'swan',
-    name: 'البجعة 🦢',
-    tag: 'رومانسي',
-    url: 'https://swan.wasminvites.com/',
-    image: '/designs/swan.webp',
-  },
-  {
-    id: 'royal',
-    name: 'ملكي 👑',
-    tag: 'فخم',
-    url: 'https://royal.wasminvites.com/',
-    image: '/designs/royal.webp',
-  },
-];
+// القائمة فارغة تماماً بحيث تضيفين الكروت بنفسك يدوياً عبر لوحة "موظف وسم"
+export const designs: Design[] = [];

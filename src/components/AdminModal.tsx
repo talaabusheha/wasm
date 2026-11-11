@@ -29,7 +29,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 }) => {
   const safeDesigns = Array.isArray(designs) ? designs : [];
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('wasm_auth_session') === 'true';
+    try {
+      return sessionStorage.getItem('wasm_auth_session') === 'true';
+    } catch {
+      return false;
+    }
   });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -58,6 +62,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [sbStatus, setSbStatus] = useState<string>('');
   const [showSqlGuide, setShowSqlGuide] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [copiedSortSql, setCopiedSortSql] = useState(false);
 
   useEffect(() => {
     const cfg = getSupabaseConfig();
@@ -65,12 +70,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setSbKey(cfg.key);
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim() === 'wasm' && password.trim() === '2005') {
-      sessionStorage.setItem('wasm_auth_session', 'true');
+      try {
+        sessionStorage.setItem('wasm_auth_session', 'true');
+      } catch {}
       setIsAuthenticated(true);
       setLoginError('');
       setUsername('');
@@ -81,7 +86,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('wasm_auth_session');
+    try {
+      sessionStorage.removeItem('wasm_auth_session');
+    } catch {}
     setIsAuthenticated(false);
     handleCancelEdit();
   };
@@ -238,8 +245,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }, 5000);
   };
 
-  const [copiedSortSql, setCopiedSortSql] = useState(false);
-
   const sortSqlCode = `alter table public.designs add column if not exists sort_order integer default 0;`;
 
   const copySortSqlToClipboard = () => {
@@ -300,6 +305,8 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
   };
 
   const isConnected = isSupabaseConfigured();
+
+  if (!isOpen) return null;
 
   return (
     <div

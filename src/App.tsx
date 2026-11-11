@@ -116,12 +116,14 @@ export const App: React.FC = () => {
       </main>
 
       {/* Admin Panel Modal for WASM Employee with Supabase Sync */}
-      <AdminModal
-        isOpen={isAdminOpen}
-        onClose={handleCloseAdmin}
-        designs={designsList}
-        onUpdateDesigns={handleUpdateDesigns}
-      />
+      {isAdminOpen && (
+        <AdminModal
+          isOpen={isAdminOpen}
+          onClose={handleCloseAdmin}
+          designs={designsList}
+          onUpdateDesigns={handleUpdateDesigns}
+        />
+      )}
     </div>
   );
 };

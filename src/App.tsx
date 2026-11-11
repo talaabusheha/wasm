@@ -36,6 +36,48 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Listen to URL path and hash to automatically open admin modal (supports /admin, #admin, /wasm)
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (
+        path === '/admin' ||
+        path === '/admin/' ||
+        path === '/wasm' ||
+        path === '/wasm/' ||
+        hash === '#admin' ||
+        hash === '#wasm' ||
+        search.includes('admin')
+      ) {
+        setIsAdminOpen(true);
+      }
+    };
+
+    checkAdminRoute();
+    window.addEventListener('popstate', checkAdminRoute);
+    window.addEventListener('hashchange', checkAdminRoute);
+    return () => {
+      window.removeEventListener('popstate', checkAdminRoute);
+      window.removeEventListener('hashchange', checkAdminRoute);
+    };
+  }, []);
+
+  const handleOpenAdmin = () => {
+    setIsAdminOpen(true);
+    if (!window.location.hash && !window.location.pathname.includes('admin')) {
+      window.history.pushState(null, '', '#admin');
+    }
+  };
+
+  const handleCloseAdmin = () => {
+    setIsAdminOpen(false);
+    if (window.location.hash === '#admin' || window.location.pathname.includes('admin')) {
+      window.history.pushState(null, '', '/');
+    }
+  };
+
   const handleUpdateDesigns = (updatedDesigns: Design[]) => {
     setDesignsList(updatedDesigns);
   };
@@ -70,13 +112,13 @@ export const App: React.FC = () => {
         </div>
 
         {/* 7. Footer with Admin Access */}
-        <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
+        <Footer onOpenAdmin={handleOpenAdmin} />
       </main>
 
       {/* Admin Panel Modal for WASM Employee with Supabase Sync */}
       <AdminModal
         isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
+        onClose={handleCloseAdmin}
         designs={designsList}
         onUpdateDesigns={handleUpdateDesigns}
       />

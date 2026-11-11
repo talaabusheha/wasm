@@ -31,15 +31,18 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
 
       {/* زر موظف وسم */}
       {onOpenAdmin && (
-        <button
-          type="button"
-          onClick={onOpenAdmin}
-          className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-arabic text-brown-muted/80 hover:text-brown border border-sand/60 bg-beige/60 hover:bg-beige hover:border-gold/50 transition-colors focus:outline-none focus:ring-1 focus:ring-gold"
+        <a
+          href="#admin"
+          onClick={(e) => {
+            e.preventDefault();
+            onOpenAdmin();
+          }}
+          className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-arabic text-brown-muted/80 hover:text-brown border border-sand/60 bg-beige/60 hover:bg-beige hover:border-gold/50 transition-colors focus:outline-none focus:ring-1 focus:ring-gold cursor-pointer"
           aria-label="تسجيل دخول موظف وسم"
         >
           <span className="text-[10px]">🔒</span>
           <span>موظف وسم</span>
-        </button>
+        </a>
       )}
     </footer>
   );

@@ -24,9 +24,10 @@ interface AdminModalProps {
 export const AdminModal: React.FC<AdminModalProps> = ({
   isOpen,
   onClose,
-  designs,
+  designs = [],
   onUpdateDesigns,
 }) => {
+  const safeDesigns = Array.isArray(designs) ? designs : [];
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('wasm_auth_session') === 'true';
   });
@@ -739,9 +740,9 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="font-arabic font-bold text-xs text-brown">
-                        الكروت المضافة حالياً ({designs.length})
+                        الكروت المضافة حالياً ({safeDesigns.length})
                       </h4>
-                      {designs.length > 0 && (
+                      {safeDesigns.length > 0 && (
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
@@ -764,7 +765,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       )}
                     </div>
 
-                    {designs.length > 1 && (
+                    {safeDesigns.length > 1 && (
                       <div className="p-2.5 rounded-xl bg-gold/10 border border-gold/30 flex items-center gap-2 text-[11px] font-arabic text-brown leading-relaxed">
                         <span className="text-sm shrink-0">💡</span>
                         <span>
@@ -773,7 +774,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       </div>
                     )}
 
-                    {designs.length === 0 ? (
+                    {safeDesigns.length === 0 ? (
                       <div className="p-4 rounded-xl bg-cream border border-sand/60 text-center">
                         <p className="text-xs font-arabic text-brown-muted leading-relaxed">
                           لا توجد أي كروت مضافة حالياً. يمكنكِ إضافة كرتكِ الأول الآن من النموذج بالأعلى 👆✨
@@ -781,10 +782,10 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       </div>
                     ) : (
                       <div className="max-h-64 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                        {designs.map((design, index) => {
+                        {safeDesigns.map((design, index) => {
                           const isCurrentEditing = editingId === design.id;
                           const isFirst = index === 0;
-                          const isLast = index === designs.length - 1;
+                          const isLast = index === safeDesigns.length - 1;
 
                           return (
                             <div
@@ -849,14 +850,14 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                 )}
                                 <div className="overflow-hidden min-w-0">
                                   <p className="font-arabic font-bold text-xs text-brown truncate">
-                                    {design.name}
+                                    {design.name || 'تصميم بدون اسم'}
                                   </p>
                                   <div className="flex items-center gap-1.5 text-[10px] text-brown-muted font-arabic">
                                     {design.tag && (
                                       <span className="text-gold-dark font-medium">{design.tag}</span>
                                     )}
                                     <span className="truncate max-w-[85px] sm:max-w-[120px] font-latin opacity-70">
-                                      {design.url.replace(/^https?:\/\//, '')}
+                                      {(design.url || '').replace(/^https?:\/\//, '')}
                                     </span>
                                   </div>
                                 </div>

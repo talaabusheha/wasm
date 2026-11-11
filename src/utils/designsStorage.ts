@@ -84,3 +84,4 @@ export async function compressImage(file: File, maxWidth = 500): Promise<string>
     reader.readAsDataURL(file);
   });
 }
+

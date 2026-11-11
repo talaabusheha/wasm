@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  VITE_SUPABASE_URL = "https://lcmnabegxmedfunleurr.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "sb_publishable_8gUEdTSe7miOKQU0CiikjA_QeG_2J5t"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -24,4 +28,3 @@
   for = "/designs/*"
   [headers.values]
     Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
-

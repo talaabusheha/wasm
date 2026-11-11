@@ -20,7 +20,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // New design form state
+  // Editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Form state
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
   const [url, setUrl] = useState('');
@@ -48,6 +51,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const handleLogout = () => {
     setAuth(false);
     setIsAuthenticated(false);
+    handleCancelEdit();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +71,31 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
   };
 
-  const handleAddDesign = (e: React.FormEvent) => {
+  // Start editing a design
+  const handleStartEdit = (design: Design) => {
+    setEditingId(design.id);
+    setName(design.name);
+    setUrl(design.url);
+    setTag(design.tag || '');
+    setImagePreview(design.image);
+    setImageUrlInput('');
+    setFormError('');
+    setSuccessMessage('');
+  };
+
+  // Cancel edit mode
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setName('');
+    setUrl('');
+    setTag('');
+    setImagePreview('');
+    setImageUrlInput('');
+    setFormError('');
+  };
+
+  // Save (Create or Update)
+  const handleSaveDesign = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
     setSuccessMessage('');
@@ -93,20 +121,37 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       finalUrl = `https://${finalUrl}`;
     }
 
-    // Optional tag (can be empty)
     const finalTag = tag.trim();
 
-    const newDesign: Design = {
-      id: `custom-${Date.now()}`,
-      name: name.trim(),
-      tag: finalTag,
-      url: finalUrl,
-      image: finalImage,
-    };
-
-    // Add to the top of designs
-    const updated = [newDesign, ...designs];
-    onUpdateDesigns(updated);
+    if (editingId) {
+      // Update existing design
+      const updated = designs.map((d) =>
+        d.id === editingId
+          ? {
+              ...d,
+              name: name.trim(),
+              tag: finalTag,
+              url: finalUrl,
+              image: finalImage,
+            }
+          : d
+      );
+      onUpdateDesigns(updated);
+      setSuccessMessage('تم تعديل وحفظ الكرت بنجاح! ✨');
+      setEditingId(null);
+    } else {
+      // Add new design
+      const newDesign: Design = {
+        id: `custom-${Date.now()}`,
+        name: name.trim(),
+        tag: finalTag,
+        url: finalUrl,
+        image: finalImage,
+      };
+      const updated = [newDesign, ...designs];
+      onUpdateDesigns(updated);
+      setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع! ✨');
+    }
 
     // Reset form
     setName('');
@@ -114,22 +159,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setImageUrlInput('');
     setUrl('');
     setTag('');
-    setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع! ✨');
 
     setTimeout(() => {
       setSuccessMessage('');
     }, 4000);
   };
 
+  // Delete a design
   const handleDeleteDesign = (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الكرت؟')) {
+      if (editingId === id) {
+        handleCancelEdit();
+      }
       const updated = designs.filter((d) => d.id !== id);
       onUpdateDesigns(updated);
     }
   };
 
+  // Clear all designs
   const handleResetToDefault = () => {
     if (window.confirm('هل أنت متأكد من مسح جميع الكروت؟')) {
+      handleCancelEdit();
       const reset = resetStoredDesigns();
       onUpdateDesigns(reset);
     }
@@ -151,7 +201,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              handleCancelEdit();
+              onClose();
+            }}
             type="button"
             className="w-8 h-8 rounded-full flex items-center justify-center text-brown-muted hover:text-brown hover:bg-cream border border-sand/60 transition-colors"
             aria-label="إغلاق النافذة"
@@ -215,13 +268,28 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           ) : (
             /* Management Dashboard */
             <div className="space-y-5">
-              {/* Add New Card Section */}
-              <div className="p-4 rounded-2xl bg-beige border border-sand space-y-3">
+              {/* Form Section (Add or Edit) */}
+              <div
+                className={`p-4 rounded-2xl border transition-all ${
+                  editingId
+                    ? 'bg-gold/10 border-gold shadow-sm'
+                    : 'bg-beige border border-sand'
+                } space-y-3`}
+              >
                 <div className="flex items-center justify-between">
                   <h3 className="font-arabic font-bold text-sm text-brown flex items-center gap-1.5">
-                    <span>✨</span>
-                    <span>إضافة كرت جديد</span>
+                    <span>{editingId ? '✏️' : '✨'}</span>
+                    <span>{editingId ? 'تعديل بيانات الكرت' : 'إضافة كرت جديد'}</span>
                   </h3>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="text-[11px] font-arabic text-brown-muted hover:text-brown border border-sand px-2 py-0.5 rounded-lg bg-cream transition-colors"
+                    >
+                      إلغاء التعديل ✕
+                    </button>
+                  )}
                 </div>
 
                 {successMessage && (
@@ -236,7 +304,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </div>
                 )}
 
-                <form onSubmit={handleAddDesign} className="space-y-3">
+                <form onSubmit={handleSaveDesign} className="space-y-3">
                   {/* Card Name */}
                   <div>
                     <label className="block text-xs font-arabic font-medium text-brown mb-1">
@@ -304,7 +372,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             }}
                             className="text-red-600 hover:underline text-[10px] mt-0.5"
                           >
-                            إلغاء الصورة ✕
+                            تغيير الصورة ✕
                           </button>
                         </div>
                       </div>
@@ -368,17 +436,29 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isProcessingImage}
-                    className="w-full py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] disabled:opacity-50"
-                  >
-                    حفظ وإضافة الكرت للموقع ✨
-                  </button>
+                  {/* Submit & Cancel Buttons */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="submit"
+                      disabled={isProcessingImage}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {editingId ? 'حفظ التعديلات ✨' : 'حفظ وإضافة الكرت للموقع ✨'}
+                    </button>
+                    {editingId && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="py-2.5 px-3 rounded-xl bg-cream border border-sand text-brown font-arabic text-xs sm:text-sm hover:bg-sand/30 transition-colors"
+                      >
+                        إلغاء
+                      </button>
+                    )}
+                  </div>
                 </form>
               </div>
 
-              {/* Existing Cards Management */}
+              {/* Cards Management List (Edit & Delete side by side) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="font-arabic font-bold text-xs text-brown">
@@ -403,43 +483,72 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </div>
                 ) : (
                   <div className="max-h-56 overflow-y-auto space-y-2 no-scrollbar pr-0.5">
-                    {designs.map((design) => (
-                      <div
-                        key={design.id}
-                        className="flex items-center justify-between p-2 rounded-xl bg-beige border border-sand gap-2"
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          {design.image ? (
-                            <img
-                              src={design.image}
-                              alt={design.name}
-                              className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
-                              💌
+                    {designs.map((design) => {
+                      const isCurrentEditing = editingId === design.id;
+
+                      return (
+                        <div
+                          key={design.id}
+                          className={`flex items-center justify-between p-2 rounded-xl border transition-all gap-2 ${
+                            isCurrentEditing
+                              ? 'bg-gold/15 border-gold shadow-xs'
+                              : 'bg-beige border-sand'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            {design.image ? (
+                              <img
+                                src={design.image}
+                                alt={design.name}
+                                className="w-8 h-12 object-cover rounded-md border border-sand/60 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-12 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
+                                💌
+                              </div>
+                            )}
+                            <div className="overflow-hidden">
+                              <p className="font-arabic font-bold text-xs text-brown truncate">
+                                {design.name}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-[10px] text-brown-muted font-arabic">
+                                {design.tag && (
+                                  <span className="text-gold-dark font-medium">{design.tag}</span>
+                                )}
+                                <span className="truncate max-w-[120px] font-latin opacity-70">
+                                  {design.url.replace(/^https?:\/\//, '')}
+                                </span>
+                              </div>
                             </div>
-                          )}
-                          <div className="overflow-hidden">
-                            <p className="font-arabic font-bold text-xs text-brown truncate">
-                              {design.name}
-                            </p>
-                            <span className="text-[10px] text-brown-muted font-arabic">
-                              {design.tag}
-                            </span>
+                          </div>
+
+                          {/* Action Buttons: Edit and Delete Side by Side */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit(design)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-arabic font-medium transition-colors ${
+                                isCurrentEditing
+                                  ? 'bg-gold-dark text-white border border-gold-dark'
+                                  : 'bg-cream border border-sand text-brown hover:border-gold hover:text-gold-dark'
+                              }`}
+                              title="تعديل بيانات هذا الكرت"
+                            >
+                              تعديل ✏️
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDesign(design.id)}
+                              className="px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors text-[11px] font-arabic"
+                              title="حذف هذا الكرت"
+                            >
+                              حذف 🗑️
+                            </button>
                           </div>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteDesign(design.id)}
-                          className="px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-[10px] font-arabic shrink-0"
-                          title="حذف هذا الكرت"
-                        >
-                          حذف 🗑️
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -453,7 +562,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 >
                   <span>تسجيل خروج</span>
                 </button>
-                <span className="text-[10px] text-brown-muted font-latin">v1.0 • WASM Admin</span>
+                <span className="text-[10px] text-brown-muted font-latin">v1.1 • WASM Admin</span>
               </div>
             </div>
           )}
@@ -462,4 +571,3 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     </div>
   );
 };
-

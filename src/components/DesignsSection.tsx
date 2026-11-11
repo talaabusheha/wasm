@@ -1,10 +1,16 @@
 import React from 'react';
-import { designs } from '../data/designs';
+import { designs as defaultDesigns, Design } from '../data/designs';
 import { DesignCard } from './DesignCard';
 
-export const DesignsSection: React.FC = () => {
+interface DesignsSectionProps {
+  designsList?: Design[];
+}
+
+export const DesignsSection: React.FC<DesignsSectionProps> = ({ designsList }) => {
+  const currentDesigns = designsList || defaultDesigns;
+
   // Hide any card whose url is empty
-  const activeDesigns = designs.filter(
+  const activeDesigns = currentDesigns.filter(
     (design) => design.url && design.url.trim().length > 0
   );
 
@@ -35,4 +41,3 @@ export const DesignsSection: React.FC = () => {
     </section>
   );
 };
-

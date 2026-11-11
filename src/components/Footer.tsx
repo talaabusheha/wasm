@@ -1,7 +1,11 @@
 import React from 'react';
 import { links } from '../data/links';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenAdmin?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
   return (
     <footer className="w-full mt-8 pt-6 pb-8 border-t border-sand flex flex-col items-center justify-center text-center gap-2">
       <div className="flex items-center gap-2 text-brown-muted">
@@ -24,7 +28,19 @@ export const Footer: React.FC = () => {
         <span>إنستغرام</span>
         <span className="font-latin text-[10px]">@wasm.invites</span>
       </a>
+
+      {/* زر موظف وسم */}
+      {onOpenAdmin && (
+        <button
+          type="button"
+          onClick={onOpenAdmin}
+          className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-arabic text-brown-muted/80 hover:text-brown border border-sand/60 bg-beige/60 hover:bg-beige hover:border-gold/50 transition-colors focus:outline-none focus:ring-1 focus:ring-gold"
+          aria-label="تسجيل دخول موظف وسم"
+        >
+          <span className="text-[10px]">🔒</span>
+          <span>موظف وسم</span>
+        </button>
+      )}
     </footer>
   );
 };
-

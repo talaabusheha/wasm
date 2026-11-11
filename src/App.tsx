@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { CtaButton } from './components/CtaButton';
 import { DesignsSection } from './components/DesignsSection';
@@ -6,8 +6,19 @@ import { ReviewsSection } from './components/ReviewsSection';
 import { FeaturesSection } from './components/FeaturesSection';
 import { StepsSection } from './components/StepsSection';
 import { Footer } from './components/Footer';
+import { AdminModal } from './components/AdminModal';
+import { Design } from './data/designs';
+import { getStoredDesigns, saveStoredDesigns } from './utils/designsStorage';
 
 export const App: React.FC = () => {
+  const [designsList, setDesignsList] = useState<Design[]>(() => getStoredDesigns());
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  const handleUpdateDesigns = (updatedDesigns: Design[]) => {
+    setDesignsList(updatedDesigns);
+    saveStoredDesigns(updatedDesigns);
+  };
+
   return (
     <div className="min-h-screen bg-cream text-brown flex flex-col items-center">
       {/* Mobile-first centered frame with max-width ~480px */}
@@ -20,7 +31,7 @@ export const App: React.FC = () => {
           <CtaButton />
 
           {/* 3. Section: شوفي تصاميمنا */}
-          <DesignsSection />
+          <DesignsSection designsList={designsList} />
 
           {/* 3.5 Section: آراء العرايس */}
           <ReviewsSection />
@@ -37,12 +48,19 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* 7. Footer */}
-        <Footer />
+        {/* 7. Footer with Admin Access */}
+        <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
       </main>
+
+      {/* Admin Panel Modal for WASM Employee */}
+      <AdminModal
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+        designs={designsList}
+        onUpdateDesigns={handleUpdateDesigns}
+      />
     </div>
   );
 };
 
 export default App;
-

@@ -18,7 +18,7 @@ export const designs: Design[] = [
     id: 'royal',
     name: 'ملكي 👑',
     tag: 'فخم',
-    url: 'https://wasminvites.com/demo/royal',
+    url: 'https://royal.wasminvites.com/',
     image: '/designs/royal.webp',
   },
   {

@@ -32,6 +32,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [copiedSuccess, setCopiedSuccess] = useState(false);
+
+  const handleCopyDesigns = () => {
+    if (designs.length === 0) return;
+    const jsonStr = JSON.stringify(designs, null, 2);
+    navigator.clipboard.writeText(jsonStr);
+    setCopiedSuccess(true);
+    setTimeout(() => setCopiedSuccess(false), 3000);
+  };
 
   if (!isOpen) return null;
 
@@ -465,13 +474,23 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     الكروت المضافة حالياً ({designs.length})
                   </h4>
                   {designs.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleResetToDefault}
-                      className="text-[10px] font-arabic text-brown-muted hover:text-red-700 underline"
-                    >
-                      مسح جميع الكروت
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCopyDesigns}
+                        className="text-[10px] font-arabic text-gold-dark hover:underline flex items-center gap-1 border border-gold/40 px-2 py-0.5 rounded-md bg-gold/10"
+                        title="نسخ كود الكروت لنشرها على جميع الأجهزة"
+                      >
+                        <span>{copiedSuccess ? 'تم النسخ بنجاح! ✓' : 'نسخ الكروت لجميع الأجهزة 📋'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleResetToDefault}
+                        className="text-[10px] font-arabic text-brown-muted hover:text-red-700 underline"
+                      >
+                        مسح الكل
+                      </button>
+                    </div>
                   )}
                 </div>
 

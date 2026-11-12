@@ -174,7 +174,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
       const updated = await updateDesignInService(updatedDesign, designs);
       onUpdateDesigns(updated);
-      setSuccessMessage('تم تعديل وحفظ الكرت بنجاح! ✨');
+      setSuccessMessage('تم تعديل وحفظ الكرت بنجاح');
       setEditingId(null);
     } else {
       // Add new design
@@ -188,7 +188,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
       const updated = await addDesignToService(newDesign, designs);
       onUpdateDesigns(updated);
-      setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع والسحابة! ✨');
+      setSuccessMessage('تمت إضافة الكرت بنجاح وحفظه في الموقع والسحابة');
     }
 
     // Reset form
@@ -238,7 +238,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     const fresh = await fetchDesigns();
     onUpdateDesigns(fresh);
-    setSbStatus('تم الاتصال والمزامنة السحابية بنجاح! ✅ أي كرت تضيفينه الآن سيظهر في كل الأجهزة.');
+    setSbStatus('تم الاتصال والمزامنة السحابية بنجاح. أي كرت تضيفينه الآن سيظهر في كل الأجهزة.');
 
     setTimeout(() => {
       setSbStatus('');
@@ -318,7 +318,20 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-beige border-b border-sand">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔒</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 text-gold-dark"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
             <h2 className="font-arabic font-bold text-base text-brown">
               {isAuthenticated ? 'لوحة تحكم موظف وسم' : 'تسجيل دخول موظف وسم'}
             </h2>
@@ -332,7 +345,20 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
             className="w-8 h-8 rounded-full flex items-center justify-center text-brown-muted hover:text-brown hover:bg-cream border border-sand/60 transition-colors"
             aria-label="إغلاق النافذة"
           >
-            ✕
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-4 h-4 text-brown-muted"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
         </div>
 
@@ -396,13 +422,27 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                 <button
                   type="button"
                   onClick={() => setActiveTab('cards')}
-                  className={`flex-1 py-1.5 text-xs font-arabic font-bold rounded-lg transition-colors ${
+                  className={`flex-1 py-1.5 text-xs font-arabic font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
                     activeTab === 'cards'
                       ? 'bg-cream text-brown shadow-xs'
                       : 'text-brown-muted hover:text-brown'
                   }`}
                 >
-                  إدارة الكروت 🎴
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                    <path d="M3 9h18" />
+                  </svg>
+                  <span>إدارة الكروت</span>
                 </button>
                 <button
                   type="button"
@@ -413,7 +453,20 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       : 'text-brown-muted hover:text-brown'
                   }`}
                 >
-                  <span>مزامنة السحابة ⚡</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+                  </svg>
+                  <span>مزامنة السحابة</span>
                   <span
                     className={`w-2 h-2 rounded-full ${
                       isConnected ? 'bg-green-500' : 'bg-sand'
@@ -427,7 +480,19 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                 <div className="p-4 rounded-2xl bg-beige border border-sand space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-arabic font-bold text-sm text-brown flex items-center gap-1.5">
-                      <span>⚡</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4 text-gold-dark"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+                      </svg>
                       <span>ربط السحابة (Supabase)</span>
                     </h3>
                     <span
@@ -437,7 +502,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                           : 'bg-sand/40 text-brown-muted border-sand'
                       }`}
                     >
-                      {isConnected ? 'متصل بالسحابة ✓' : 'غير متصل بعد'}
+                      {isConnected ? 'متصل بالسحابة' : 'غير متصل بعد'}
                     </span>
                   </div>
 
@@ -484,9 +549,22 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98]"
+                      className="w-full py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] flex items-center justify-center gap-1.5"
                     >
-                      حفظ وتفعيل الاتصال السحابي ⚡
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4 text-white"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>حفظ وتفعيل الاتصال السحابي</span>
                     </button>
                   </form>
 
@@ -494,7 +572,20 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                   <div className="pt-2 border-t border-sand/70">
                     <div className="p-3 rounded-2xl bg-gold/10 border border-gold/30 space-y-2">
                       <div className="flex items-center gap-1.5 text-xs font-arabic font-bold text-brown">
-                        <span>⚡</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4 text-gold-dark"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <polyline points="19 12 12 19 5 12" />
+                        </svg>
                         <span>تفعيل خاصية ترتيب الكروت في Supabase</span>
                       </div>
                       <p className="text-[11px] font-arabic text-brown-muted leading-relaxed">
@@ -509,9 +600,23 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       <button
                         type="button"
                         onClick={copySortSqlToClipboard}
-                        className="w-full py-1.5 rounded-xl bg-cream border border-sand text-xs font-arabic text-brown hover:bg-sand/30 font-medium transition-colors"
+                        className="w-full py-1.5 rounded-xl bg-cream border border-sand text-xs font-arabic text-brown hover:bg-sand/30 font-medium transition-colors flex items-center justify-center gap-1.5"
                       >
-                        {copiedSortSql ? 'تم نسخ سطر الترتيب بنجاح! ✓' : 'نسخ كود الترتيب (SQL) 📋'}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-3.5 h-3.5 text-brown-muted"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                        </svg>
+                        <span>{copiedSortSql ? 'تم نسخ سطر الترتيب بنجاح' : 'نسخ كود الترتيب (SQL)'}</span>
                       </button>
                     </div>
                   </div>
@@ -523,7 +628,23 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                       onClick={() => setShowSqlGuide(!showSqlGuide)}
                       className="text-[11px] font-arabic text-gold-dark hover:underline flex items-center justify-between w-full"
                     >
-                      <span>🛠️ كود إنشاء جدول الكروت بالكامل من الصفر</span>
+                      <span className="flex items-center gap-1.5">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-3.5 h-3.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <polyline points="16 18 22 12 16 6" />
+                          <polyline points="8 6 2 12 8 18" />
+                        </svg>
+                        <span>كود إنشاء جدول الكروت بالكامل من الصفر</span>
+                      </span>
                       <span>{showSqlGuide ? '▲' : '▼'}</span>
                     </button>
 
@@ -538,9 +659,23 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                         <button
                           type="button"
                           onClick={copySqlToClipboard}
-                          className="w-full py-1.5 rounded-lg bg-cream border border-sand text-[11px] font-arabic text-brown hover:bg-sand/30 transition-colors"
+                          className="w-full py-1.5 rounded-lg bg-cream border border-sand text-[11px] font-arabic text-brown hover:bg-sand/30 transition-colors flex items-center justify-center gap-1.5"
                         >
-                          {copiedSql ? 'تم نسخ الكود! ✓' : 'نسخ كود الـ SQL بالكامل 📋'}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3.5 h-3.5 text-brown-muted"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                          </svg>
+                          <span>{copiedSql ? 'تم نسخ الكود بنجاح' : 'نسخ كود الـ SQL بالكامل'}</span>
                         </button>
                       </div>
                     )}
@@ -559,16 +694,60 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-arabic font-bold text-sm text-brown flex items-center gap-1.5">
-                        <span>{editingId ? '✏️' : '✨'}</span>
+                        {editingId ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4 text-gold-dark"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            <path d="m15 5 4 4" />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4 text-gold-dark"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                        )}
                         <span>{editingId ? 'تعديل بيانات الكرت' : 'إضافة كرت جديد'}</span>
                       </h3>
                       {editingId && (
                         <button
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-[11px] font-arabic text-brown-muted hover:text-brown border border-sand px-2 py-0.5 rounded-lg bg-cream transition-colors"
+                          className="text-[11px] font-arabic text-brown-muted hover:text-brown border border-sand px-2 py-0.5 rounded-lg bg-cream transition-colors flex items-center gap-1"
                         >
-                          إلغاء التعديل ✕
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3 h-3 text-brown-muted"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M18 6 6 18" />
+                            <path d="m6 6 12 12" />
+                          </svg>
+                          <span>إلغاء التعديل</span>
                         </button>
                       )}
                     </div>
@@ -595,7 +774,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                           type="text"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          placeholder="مثال: البجعة 🦢 أو الملكي 👑"
+                          placeholder="مثال: البجعة أو الملكي"
                           className="w-full px-3 py-2 rounded-xl bg-cream border border-sand text-brown text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-gold"
                           required
                         />
@@ -610,7 +789,20 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                         {/* Image Upload Button */}
                         <div className="flex flex-col gap-2">
                           <label className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-sand bg-cream hover:bg-beige cursor-pointer transition-colors text-xs font-arabic text-brown-muted">
-                            <span>📷</span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-4 h-4 text-brown-muted"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                              <circle cx="12" cy="13" r="4" />
+                            </svg>
                             <span>
                               {isProcessingImage
                                 ? 'جارِ معالجة الصورة...'
@@ -655,9 +847,23 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                   setImagePreview('');
                                   setImageUrlInput('');
                                 }}
-                                className="text-red-600 hover:underline text-[10px] mt-0.5"
+                                className="text-red-600 hover:underline text-[10px] mt-0.5 flex items-center gap-1"
                               >
-                                تغيير الصورة ✕
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-2.5 h-2.5"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M18 6 6 18" />
+                                  <path d="m6 6 12 12" />
+                                </svg>
+                                <span>تغيير الصورة</span>
                               </button>
                             </div>
                           </div>
@@ -690,9 +896,23 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                             <button
                               type="button"
                               onClick={() => setTag('')}
-                              className="text-[10px] text-red-600 hover:underline font-arabic"
+                              className="text-[10px] text-red-600 hover:underline font-arabic flex items-center gap-1"
                             >
-                              بدون نوع ✕
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-2.5 h-2.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                              </svg>
+                              <span>بدون نوع</span>
                             </button>
                           )}
                         </div>
@@ -726,9 +946,44 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                         <button
                           type="submit"
                           disabled={isProcessingImage}
-                          className="flex-1 py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] disabled:opacity-50"
+                          className="flex-1 py-2.5 px-4 rounded-xl bg-gold-dark hover:bg-gold text-white font-arabic font-bold text-xs sm:text-sm shadow-soft transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
                         >
-                          {editingId ? 'حفظ التعديلات ✨' : 'حفظ وإضافة الكرت للموقع ✨'}
+                          {editingId ? (
+                            <span className="flex items-center justify-center gap-1.5">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4 text-white"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              <span>حفظ التعديلات</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-center gap-1.5">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4 text-white"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                              </svg>
+                              <span>حفظ وإضافة الكرت للموقع</span>
+                            </span>
+                          )}
                         </button>
                         {editingId && (
                           <button
@@ -758,7 +1013,42 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                             title="نسخ كود الكروت لنشرها على جميع الأجهزة"
                           >
                             <span>
-                              {copiedSuccess ? 'تم النسخ بنجاح! ✓' : 'نسخ الكروت 📋'}
+                              {copiedSuccess ? (
+                                <span className="flex items-center gap-1">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-3 h-3 text-green-700"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  <span>تم النسخ بنجاح</span>
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-3 h-3"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                  </svg>
+                                  <span>نسخ الكروت</span>
+                                </span>
+                              )}
                             </span>
                           </button>
                           <button
@@ -774,7 +1064,21 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
 
                     {safeDesigns.length > 1 && (
                       <div className="p-2.5 rounded-xl bg-gold/10 border border-gold/30 flex items-center gap-2 text-[11px] font-arabic text-brown leading-relaxed">
-                        <span className="text-sm shrink-0">💡</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4 text-gold-dark shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="16" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
                         <span>
                           استخدمي أزرار <strong>(▲ / ▼)</strong> لتحديد ترتيب ظهور الكروت. الكرت رقم <strong>#1</strong> هو أول كرت سيظهر للزوار في واجهة الموقع!
                         </span>
@@ -784,7 +1088,7 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                     {safeDesigns.length === 0 ? (
                       <div className="p-4 rounded-xl bg-cream border border-sand/60 text-center">
                         <p className="text-xs font-arabic text-brown-muted leading-relaxed">
-                          لا توجد أي كروت مضافة حالياً. يمكنكِ إضافة كرتكِ الأول الآن من النموذج بالأعلى 👆✨
+                          لا توجد أي كروت مضافة حالياً. يمكنكِ إضافة كرتكِ الأول الآن من النموذج بالأعلى.
                         </p>
                       </div>
                     ) : (
@@ -852,7 +1156,21 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                   />
                                 ) : (
                                   <div className="w-8 h-11 bg-cream rounded-md border border-sand/60 flex items-center justify-center text-xs shrink-0">
-                                    💌
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-4 h-4 text-gold-dark/70"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="1.75"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                      <circle cx="9" cy="9" r="2" />
+                                      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                    </svg>
                                   </div>
                                 )}
                                 <div className="overflow-hidden min-w-0">
@@ -882,7 +1200,23 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                   }`}
                                   title="تعديل بيانات هذا الكرت"
                                 >
-                                  تعديل ✏️
+                                  <span className="flex items-center gap-1">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-3 h-3"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                      <path d="m15 5 4 4" />
+                                    </svg>
+                                    <span>تعديل</span>
+                                  </span>
                                 </button>
 
                                 <button
@@ -891,7 +1225,24 @@ create policy "Allow all delete" on public.designs for delete using (true);`;
                                   className="px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors text-[11px] font-arabic"
                                   title="حذف هذا الكرت"
                                 >
-                                  حذف 🗑️
+                                  <span className="flex items-center gap-1">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-3 h-3 text-red-700"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M3 6h18" />
+                                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                    </svg>
+                                    <span>حذف</span>
+                                  </span>
                                 </button>
                               </div>
                             </div>

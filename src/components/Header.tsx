@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
 
       {/* Slogan */}
       <p className="text-xs sm:text-sm text-brown-muted font-arabic max-w-xs leading-relaxed mb-4">
-        دعوة عرسك… برابط واحد بيوصل لكل ضيوفك 🤎
+        دعوة عرسك… برابط واحد بيوصل لكل ضيوفك
       </p>
 
       {/* Small Instagram icon (Min tap target 44x44px for accessibility) */}
